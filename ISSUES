@@ -1,0 +1,5 @@
+* inconsistant members naming (mPrefix, _underscorePrefix, noPrefix with
+  excessive this-> too)
+
+* inconsistent exceptions -- names, semantics and everything about them
+  basically

@@ -1,0 +1,24 @@
+4 spaces per indentation level
+
+K&R braces
+
+Unless it is EXTREMELY necessary for readability, avoid skipping braces in one-line logic blocks
+
+Classes/Structs: CamelCase
+
+Methods and free functions: lowerCamelCase
+
+Class private data members: _sameAsMethodsWithLeadingUnderscore
+
+Public struct data members: lowerCamelCase
+
+Function parameters should have 'p' prefix, as in `int increment(int pValue)`
+
+My personal quirk: use one space between function definition/declaration and parenthesis (and no space on function call):
+void myfunc () {} // declaration
+myfunc() // call
+// easier to search for calls
+
+Project structure: try to follow this:
+http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
+

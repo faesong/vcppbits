@@ -1,0 +1,30 @@
+A simple ini-like file parser
+
+File syntax looks like this:
+
+top_level_setting VALUE
+pi_equals_around 3.141593
+[section1]
+setting_within_section1 can have just unquoted text
+[section2]
+# comments start with hash sign
+foo 11
+[section2]
+# section names can be repeated
+bar 22
+# end of example
+
+Allowing to repeat section names makes it possible to define multiple entities
+of the same type -- can be extremely useful for some domains: section name just
+specifies the type of the element, like this:
+
+[person]
+name Bob
+phone_number 123456789
+[person]
+name Alice
+phone_number 234567890
+# end of example
+
+
+
