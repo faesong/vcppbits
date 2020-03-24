@@ -80,7 +80,7 @@ bool SettingsCategoriesIterator::isElement () const {
     return this->currentIsElement;
 }
 
-std::string SettingsCategoriesIterator::getName () {
+std::string SettingsCategoriesIterator::getName () const {
     return (*current).first;
 }
 

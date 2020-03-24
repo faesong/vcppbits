@@ -51,7 +51,7 @@ public:
                                 SettingsCategories::iterator e);
     void peekNext ();
     bool isElement () const;
-    std::string getName ();
+    std::string getName () const;
     SettingsIterator getSettingsIterator ();
 private:
     const SettingsCategories::iterator begin;
@@ -60,12 +60,73 @@ private:
     bool currentIsElement;
 };
 
+class SettingsSectionView {
+public:
+    class iterator {
+    public:
+        explicit iterator (const SettingsPtrsMap::iterator &pIt)
+            : _current (pIt) {
+        }
+        iterator operator++() {
+            ++_current;
+            return *this;
+        }
+        bool operator!=(const iterator& pOther) const {
+            return _current != pOther._current;
+        }
+        Setting& operator*() const {
+            return *(_current->second);
+        }
+    private:
+        SettingsPtrsMap::iterator _current;
+    };
+
+    iterator begin () { return iterator(_settingsPtrsMap.begin()); }
+    iterator end () { return iterator(_settingsPtrsMap.end()); }
+
+    SettingsSectionView (const std::string& pName,
+                         SettingsPtrsMap& pSettingsPtrsMap)
+        : _name (pName),
+          _settingsPtrsMap (pSettingsPtrsMap) {
+    }
+
+    const std::string& getName() const {
+        return _name;
+    }
+
+private:
+
+    const std::string& _name;
+    SettingsPtrsMap& _settingsPtrsMap;
+};
 
 // usage: 1) create instance with (optional) filename
 // 2) add settings by calling .appendSetting
 // call .load() to load setting values from file
 class Settings {
 public:
+    class iterator {
+    public:
+        iterator (const SettingsCategories::iterator &pIt)
+            : _current (pIt) {
+        }
+        iterator operator++() {
+            ++_current;
+            return *this;
+        }
+        bool operator!=(const iterator& pOther) const {
+            return _current != pOther._current;
+        }
+        SettingsSectionView operator*() const {
+            return SettingsSectionView(_current->first, _current->second);
+        }
+    private:
+        SettingsCategories::iterator _current;
+    };
+
+    iterator begin () { return iterator(this->categories.begin()); }
+    iterator end () { return iterator(this->categories.end()); }
+
     explicit Settings (const std::string& filename = "");
     ~Settings ();
     Setting& appendSetting (Setting set);
