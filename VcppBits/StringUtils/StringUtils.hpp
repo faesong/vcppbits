@@ -130,4 +130,4 @@ inline std::string toString (const T &val) {
 } // namespace VcppBits
 
 
-#endif VcppBits_STRING_UTILS_HPP_INCLUDED__
+#endif // VcppBits_STRING_UTILS_HPP_INCLUDED__
