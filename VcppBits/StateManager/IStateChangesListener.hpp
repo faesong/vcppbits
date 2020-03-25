@@ -37,6 +37,7 @@ inline std::string toString(const StateEventType pEvent) {
     case StateEventType::RESUME:
         return "resuming";
     };
+    return "<unknown state>";
 }
 }
 
