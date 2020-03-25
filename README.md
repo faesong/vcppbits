@@ -2,6 +2,16 @@ Vitaly's C++ Bits
 
 A collection of small classes that I happen to keep copying and pasting from one project to another.
 
+Building this little library by itself is not really feasible, and instead to
+add a component to your own project, you just do:
+
+add_subdirectory(FULLPATH/VcppBits/StringUtils StringUtils) # dependency of KeyFile
+add_subdirectory(FULLPATH/VcppBits/KeyFile KeyFile) # second arg is arbitrary 
+target_link_libraries(YOURPROJECTNAME VcppBits-StringUtils)
+
+See SampleProject for full example. Note that dependencies are to be satisfied by component user. 
+
+
 KeyFile -- simple ini-like file parser, with ability to properly handle multiple identically-named '[section]'s
 
 MathUtils -- more like a placeholder... Just here in case I need more custom math functions in other components in the future
