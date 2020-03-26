@@ -106,6 +106,22 @@ public:
         }
     }
 
+    bool isDefault () {
+        switch (this->valuetype) {
+        case BOOLEAN:
+            return _defaultValue.boolVal == _value.boolVal;
+        case STRING:
+            return stringDefaultVal == stringVal;
+        case INTEGER:
+            return _defaultValue.intVal == _value.intVal;
+        case FLOATINGPOINT:
+            return _defaultValue.floatVal == _value.floatVal;
+        default:
+            throw;
+        }
+    }
+
+
     int* getIntPtr (); // Note: if you want the listeners to be notified, you
                        // must call triggerChangeEvent() manually on change
                        // Note: upper/lower limits are (obviously) not enforce
