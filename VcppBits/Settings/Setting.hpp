@@ -87,6 +87,25 @@ public:
     float getFloatDown () const;
     float getFloatUp () const;
 
+    void resetToDefault () {
+        switch (this->valuetype) {
+        case BOOLEAN:
+            setBool(_defaultValue.boolVal);
+            break;
+        case STRING:
+            setString(stringDefaultVal);
+            break;
+        case INTEGER:
+            setFloat(_defaultValue.intVal);
+            break;
+        case FLOATINGPOINT:
+            setFloat(_defaultValue.floatVal);
+            break;
+        default:
+            throw;
+        }
+    }
+
     int* getIntPtr (); // Note: if you want the listeners to be notified, you
                        // must call triggerChangeEvent() manually on change
                        // Note: upper/lower limits are (obviously) not enforce
