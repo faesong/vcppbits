@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with CppBits.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef VcppBits_SETTINGS_STRING_UTILS_HPP_INCLUDED__
-#define VcppBits_SETTINGS_STRING_UTILS_HPP_INCLUDED__
+#ifndef VcppBits_MATH_UTILS_HPP_INCLUDED__
+#define VcppBits_MATH_UTILS_HPP_INCLUDED__
 
 namespace VcppBits {
 namespace MathUtils {
@@ -41,4 +41,4 @@ bool compareFloats (const T A, const T B) {
 } // namespace MathUtils
 } // namespace VcppBits
 
-#endif // VcppBits_SETTINGS_STRING_UTILS_HPP_INCLUDED__
+#endif // VcppBits_MATH_UTILS_HPP_INCLUDED__
