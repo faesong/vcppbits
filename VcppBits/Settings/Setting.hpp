@@ -96,7 +96,7 @@ public:
             setString(stringDefaultVal);
             break;
         case INTEGER:
-            setFloat(_defaultValue.intVal);
+            setInt(_defaultValue.intVal);
             break;
         case FLOATINGPOINT:
             setFloat(_defaultValue.floatVal);
