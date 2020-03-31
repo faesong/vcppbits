@@ -38,7 +38,8 @@ public:
                      FLOATINGPOINT,
                      STRING };
 
-    explicit Setting (const std::string &name = std::string("nonexistent"));
+    explicit Setting (int* ILLEGAL_CONSTRUCTOR = nullptr,
+                      int* STUB_FOR_STD_CONTAINERS_DO_NOT_USE_ME = nullptr);
     Setting (const std::string &name,
              const bool default_val);
     Setting (const std::string &name,
@@ -132,25 +133,36 @@ public:
     float* getFloatPtr ();
     bool* getBoolPtr ();
 
-    // whacky hacks to make templated get() function work
-    float getValue (float) const {
-        return getFloat();
+    template <typename T> T getValue () const;
+    template <> bool getValue () const {
+        return getBool();
     }
-
-    int getValue (int) const {
+    template <> int getValue () const {
         return getInt();
     }
-
-    std::string getValue (std::string) const {
+    template <> float getValue () const {
+        return getFloat();
+    }
+    template <> std::string getValue () const {
         return getString();
     }
 
-    bool getValue (bool) const {
-        return getBool();
+    template <typename T> void setValue (T new_val);
+    template <> void setValue (bool new_val) {
+        setBool(new_val);
+    }
+    template <> void setValue (int new_val) {
+        setInt(new_val);
+    }
+    template <> void setValue (float new_val) {
+        setFloat(new_val);
+    }
+    template <> void setValue (std::string new_val) {
+        setString(new_val);
     }
 
     void setString (const std::string &new_val);
-    std::string getString () const;
+    const std::string &getString () const;
     std::vector<std::string> getPossibleStrings () const;
     std::string getDefaultString () const;
     std::iterator_traits<std::vector<std::string>::iterator>::difference_type

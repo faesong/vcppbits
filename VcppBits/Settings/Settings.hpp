@@ -131,12 +131,12 @@ public:
     ~Settings ();
     Setting& appendSetting (Setting set);
     void load ();
+    void resetAll ();
     void setFilename (const std::string& name) {
         this->filename = name;
     }
     template<typename T> T get (const std::string& name) const {
-        const T fake{};
-        return getSetting(name).getValue(fake);
+        return getSetting(name).getValue<T>();
     }
     void loadFromFile (const std::string &pFileName);
     void reloadFromFile ();

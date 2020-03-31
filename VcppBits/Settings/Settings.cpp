@@ -124,6 +124,15 @@ void Settings::load () {
     }
 }
 
+void Settings::resetAll() {
+    SettingsMap::iterator
+        it = this->values.begin(),
+        end = this->values.end();
+    for (;it != end; ++it) {
+        (*it).second.resetToDefault();
+    }
+}
+
 void Settings::reloadFromFile () {
     this->load();
 }

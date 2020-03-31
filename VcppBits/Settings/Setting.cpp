@@ -19,25 +19,18 @@
 // along with CppBits.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "Setting.hpp"
+#include "VcppBits/Settings/Setting.hpp"
 #include <cassert>
 #include <stdexcept>
 #include <algorithm>
 
-#include "SettingsException.hpp"
+#include "VcppBits/Settings/SettingsException.hpp"
 
 namespace VcppBits {
 
 
-Setting::Setting (const std::string &pName)
-    : type (S_INTEGER),
-      valuetype (INTEGER),
-      name (pName),
-      _value (false),
-      _defaultValue (false),
-      _upperValue (false),
-      _lowerValue (false) {
-    throw std::runtime_error("Setting::Setting(std::string) should never be called");
+Setting::Setting (int*, int*) {
+    throw std::runtime_error("Setting::Setting(bool, bool) should never be called");
     // should never be called; added for std::map
 }
 Setting::Setting (const std::string &pName, const bool default_val)
@@ -191,7 +184,7 @@ float Setting::getFloatUp () const {
     assert (this->valuetype == FLOATINGPOINT);
     return _upperValue.floatVal;
 }
-std::string Setting::getString () const {
+const std::string &Setting::getString () const {
     assert (this->valuetype == STRING);
     return this->stringVal;
 }
