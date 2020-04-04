@@ -138,6 +138,28 @@ public:
         }
     }
 
+    class iterator {
+    public:
+        explicit iterator (T* pPtr)
+            : _current (pPtr) {
+        }
+        iterator operator++() {
+            ++_current;
+            return *this;
+        }
+        bool operator!=(const iterator& pOther) const {
+            return _current != pOther._current;
+        }
+        T& operator*() const {
+            return *_current;
+        }
+    private:
+        T* _current;
+    };
+
+    iterator begin () const { return iterator(_data); }
+    iterator end () const { return iterator(_data + _used_size); }
+
     void push_back (const T& pElement) {
         if ((_used_size) >= _allocated_size) {
             grow(std::max<size_t>(8, _allocated_size * 2));
