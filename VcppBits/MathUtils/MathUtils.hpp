@@ -38,6 +38,12 @@ bool compareFloats (const T A, const T B) {
         && (-diff < std::numeric_limits<T>::epsilon());
 }
 
+template<class T>
+bool isNan(T t)
+{
+    return t != t;
+}
+
 } // namespace MathUtils
 } // namespace VcppBits
 
