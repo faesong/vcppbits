@@ -133,6 +133,24 @@ public:
     float* getFloatPtr ();
     bool* getBoolPtr ();
 
+    bool getValue (bool) const {
+        return getBool();
+    }
+
+    int getValue (int) const {
+        return getInt();
+    }
+
+    float getValue (float) const {
+        return getFloat();
+    }
+
+    std::string getValue (std::string) const {
+        return getString();
+    }
+
+    /*
+    // THIS IS BROKEN IN MSVC
     template <typename T> T getValue () const;
     template <> bool getValue () const {
         return getBool();
@@ -160,6 +178,7 @@ public:
     template <> void setValue (std::string new_val) {
         setString(new_val);
     }
+    */
 
     void setString (const std::string &new_val);
     const std::string &getString () const;
@@ -202,7 +221,7 @@ private:
         UnionNumericType (float pVal) : floatVal(pVal) {}
         UnionNumericType () : intVal(0) {}
     };
-    
+
     UnionType _value;
     UnionType _defaultValue;
     UnionNumericType _upperValue;

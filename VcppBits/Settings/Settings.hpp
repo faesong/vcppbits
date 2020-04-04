@@ -136,7 +136,8 @@ public:
         this->filename = name;
     }
     template<typename T> T get (const std::string& name) const {
-        return getSetting(name).getValue<T>();
+        const T fake{};
+        return getSetting(name).getValue(fake);
     }
     void loadFromFile (const std::string &pFileName);
     void reloadFromFile ();
