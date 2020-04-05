@@ -44,6 +44,11 @@ bool isNan(T t)
     return t != t;
 }
 
+template<class T>
+T sign (const T& pVal) {
+    return pVal > 0 ? T{1} : T{-1};
+}
+
 } // namespace MathUtils
 } // namespace VcppBits
 
