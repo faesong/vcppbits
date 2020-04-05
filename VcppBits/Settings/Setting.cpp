@@ -189,7 +189,7 @@ const std::string &Setting::getString () const {
     return this->stringVal;
 }
 
-std::iterator_traits<std::vector<std::string>::iterator>::difference_type
+size_t
 Setting::getStringPos () const {
     assert (this->type == S_STRING_ONE_OF);
     return this->stringPos;
@@ -235,7 +235,8 @@ void Setting::setString (const std::string &new_val) {
         if (pos == stringPossibleVals.end()) {
             throw SettingsException(this->name, SettingsException::OUT_OF_RANGE);
         }
-        this->stringPos = std::distance(stringPossibleVals.begin(), pos);
+        this->stringPos =
+            static_cast<size_t>(std::distance(stringPossibleVals.begin(), pos));
     }
     this->stringVal = new_val;
     this->onChangeEvent();
@@ -306,5 +307,37 @@ void Setting::onChangeEvent () {
 
     // now call the callbaks
 }
+
+namespace detail {
+template <> bool get<bool> (const Setting& pSetting) {
+    return pSetting.getBool();
+}
+template <> int get<int> (const Setting& pSetting) {
+    return pSetting.getInt();
+}
+template <> float get<float> (const Setting& pSetting) {
+    return pSetting.getFloat();
+}
+template <> std::string get<std::string> (const Setting& pSetting) {
+    return pSetting.getString();
+}
+
+template <> void set<bool> (Setting& pSetting, const bool& pVal) {
+    pSetting.setBool(pVal);
+}
+
+template <> void set<int> (Setting& pSetting, const int& pVal) {
+    pSetting.setInt(pVal);
+}
+
+template <> void set<float> (Setting& pSetting, const float& pVal) {
+    pSetting.setFloat(pVal);
+}
+
+template <> void set<std::string> (Setting& pSetting,
+                                   const std::string& pVal) {
+    pSetting.setString(pVal);
+}
+} // namespace detail
 
 } // namespace VcppBits

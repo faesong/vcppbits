@@ -27,6 +27,12 @@ namespace VcppBits {
 
 class Setting;
 
+namespace detail {
+template <typename T> T get (const Setting& pSetting);
+template <typename T> void set (Setting& pSetting, const T& pNewVal);
+}
+
+
 class Setting {
 public:
     enum TYPE { S_BOOL,
@@ -149,43 +155,20 @@ public:
         return getString();
     }
 
-    /*
-    // THIS IS BROKEN IN MSVC
-    template <typename T> T getValue () const;
-    template <> bool getValue () const {
-        return getBool();
-    }
-    template <> int getValue () const {
-        return getInt();
-    }
-    template <> float getValue () const {
-        return getFloat();
-    }
-    template <> std::string getValue () const {
-        return getString();
-    }
 
-    template <typename T> void setValue (T new_val);
-    template <> void setValue (bool new_val) {
-        setBool(new_val);
+    // THIS IS BROKEN IN MSVC
+    template <typename T> T getValue () const {
+        return detail::get<T>(*this);
     }
-    template <> void setValue (int new_val) {
-        setInt(new_val);
+    template <typename T> void setValue (const T &new_val) {
+        detail::set<T>(*this, new_val);
     }
-    template <> void setValue (float new_val) {
-        setFloat(new_val);
-    }
-    template <> void setValue (std::string new_val) {
-        setString(new_val);
-    }
-    */
 
     void setString (const std::string &new_val);
     const std::string &getString () const;
     std::vector<std::string> getPossibleStrings () const;
     std::string getDefaultString () const;
-    std::iterator_traits<std::vector<std::string>::iterator>::difference_type
-    getStringPos () const;
+    size_t getStringPos () const;
 
     void setByString (const std::string &new_val);
     std::string getAsString () const;
@@ -230,7 +213,7 @@ private:
     std::string stringVal;
     std::string stringDefaultVal;
     std::vector<std::string> stringPossibleVals;
-    std::iterator_traits<std::vector<std::string>::iterator>::difference_type stringPos;
+    size_t stringPos;
     typedef std::pair<void *, std::function<void()>> SettingListener;
     std::vector<SettingListener> listeners;
 };
