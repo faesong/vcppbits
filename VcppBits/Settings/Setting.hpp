@@ -30,8 +30,8 @@ class Setting;
 namespace detail {
 template <typename T> T get (const Setting& pSetting);
 template <typename T> void set (Setting& pSetting, const T& pNewVal);
-}
 
+} // namespace detail
 
 class Setting {
 public:
@@ -194,7 +194,7 @@ private:
         UnionType (bool pVal) : boolVal(pVal) {}
         UnionType (int pVal) : intVal(pVal)   {}
         UnionType (float pVal) : floatVal(pVal) {}
-		UnionType () : boolVal (false) {}
+        UnionType () : boolVal (false) {}
     };
 
     union UnionNumericType {
