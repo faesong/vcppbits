@@ -33,7 +33,7 @@ public:
 template <typename T>
 class SimpleVector {
 public:
-    explicit SimpleVector (const size_t sz = 0) {
+    SimpleVector (const size_t sz = 0) {
         if (sz)
             _data = new T[sz];
         _allocated_size = sz;
@@ -87,7 +87,7 @@ public:
         _used_size = 0;
     }
 
-    size_t size () {
+    size_t size () const {
         return _used_size;
     }
 
@@ -167,7 +167,7 @@ public:
         _data[_used_size++] = pElement;
     }
 
-    T* data () {
+    T* data () const {
         return _data;
     }
 
