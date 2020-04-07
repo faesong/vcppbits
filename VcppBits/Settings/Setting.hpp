@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <variant>
 
 namespace VcppBits {
 
@@ -216,6 +217,79 @@ private:
     size_t stringPos;
     typedef std::pair<void *, std::function<void()>> SettingListener;
     std::vector<SettingListener> listeners;
+};
+
+class SettingUpdater {
+public:
+    SettingUpdater (Setting &pSetting, bool *pPtr)
+        : _setting (pSetting),
+          _ptr (pPtr) {
+        subscribeToSettingUpdate();
+    }
+    SettingUpdater (Setting &pSetting, int *pPtr)
+        : _setting (pSetting),
+          _ptr (pPtr) {
+        subscribeToSettingUpdate();
+    }
+    SettingUpdater (Setting &pSetting, float *pPtr)
+        : _setting (pSetting),
+          _ptr (pPtr) {
+        subscribeToSettingUpdate();
+    }
+    SettingUpdater (Setting &pSetting, std::string *pPtr)
+        : _setting (pSetting),
+          _ptr (pPtr) {
+        subscribeToSettingUpdate();
+    }
+
+    ~SettingUpdater () {
+        _setting.removeUpdateHandler(this);
+    }
+
+    // TODO avoid all these
+    SettingUpdater (const SettingUpdater& pOther)
+      : _setting (pOther._setting),
+        _ptr (pOther._ptr) {
+        subscribeToSettingUpdate();
+    }
+    SettingUpdater& operator= (const SettingUpdater&) {
+        throw;
+    }
+    SettingUpdater (SettingUpdater&& pOther)
+        : _setting(pOther._setting) {
+        throw;
+    }
+    SettingUpdater& operator= (SettingUpdater&&) {
+        throw;
+    }
+
+private:
+    void subscribeToSettingUpdate () {
+        auto listener_func = std::bind(&SettingUpdater::onSettingUpdate, this);
+        _setting.addUpdateHandler(this, listener_func);
+        onSettingUpdate(); // initialize the value immediately
+    }
+    void onSettingUpdate () {
+        switch (_setting.getValueType()) {
+        case Setting::BOOLEAN:
+            *std::get<bool*>(_ptr) = _setting.getBool();
+            return;
+        case Setting::INTEGER:
+            *std::get<int*>(_ptr) = _setting.getInt();
+            return;
+        case Setting::FLOATINGPOINT:
+            *std::get<float*>(_ptr) = _setting.getFloat();
+            return;
+        case Setting::STRING:
+            *std::get<std::string*>(_ptr) = _setting.getString();
+            return;
+        default:
+            return;
+        }
+    }
+
+    Setting &_setting;
+    std::variant<bool*, int*, float*, std::string*> _ptr;
 };
 
 } // namespace VcppBits
