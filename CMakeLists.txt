@@ -13,9 +13,15 @@ endif ()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CXX_FLAGS}")
 
+add_subdirectory(VcppBits/StringUtils StringUtils)
+add_subdirectory(VcppBits/KeyFile KeyFile)
+
 
 add_executable(tests
   Tests/TestsDriver.cpp
   VcppBits/Settings/SettingsTests.cpp
-  VcppBits/Settings/Setting.cpp)
+  VcppBits/Settings/Setting.cpp
+  VcppBits/Settings2/Settings2Tests.cpp
+  VcppBits/Settings2/Settings2CustomTypeTests.cpp)
 
+target_link_libraries(tests VcppBits-KeyFile)
