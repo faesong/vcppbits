@@ -72,6 +72,8 @@ public:
         pOther._allocated_size = 0;
         pOther._data = nullptr;
         pOther._isViewOnly = false;
+
+        return *this;
     }
 
     void initializeByMemory (T* pData,
