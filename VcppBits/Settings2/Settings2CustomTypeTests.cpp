@@ -27,24 +27,6 @@ struct Vector3 {
     static Vector3 max () { return Vector3{ _max, _max, _max }; };
 };
 
-// TODO5: move to settings2.hpp
-// works for anything that has <= and >= operators defined,
-// but does not have default-constructor
-template<typename T>
-struct GenericArithmeticConstraint {
-    using value_type = T;
-    GenericArithmeticConstraint (const T pMin,
-                                 const T pMax)
-        : _min (pMin),
-          _max (pMax) {}
-    bool isValid (const T pValueToTest) const {
-        return (pValueToTest >= _min) && (pValueToTest <= _max);
-    }
-
-    T _min;
-    T _max;
-};
-
 
 /// Example on how to use library with your own type
 
@@ -135,10 +117,10 @@ TEST_CASE("Test our custom Vector3 utilities", "[Vector3]") {
 TEST_CASE("Custom Setting initialized", "[Vector3Value]") {
 
     Setting s(Vector3Value({0.1f, 0.f, 0.f}, vec3_constr));
-    REQUIRE(s.getValue<Vector3Value>() == ApproxV3(Vector3{0.1f, 0.f, 0.f}));
-    REQUIRE(s.get<Vector3Value>().getAsString() == "Vector3(0.100000 0.000000 0.000000)");
-    s.get<Vector3Value>().setByString("Vector3(0.123456 0.789101 0.111213)");
-    REQUIRE(s.getValue<Vector3Value>()
+    REQUIRE(s.get<Vector3Value>() == ApproxV3(Vector3{0.1f, 0.f, 0.f}));
+    REQUIRE(s.getAsString() == "Vector3(0.100000 0.000000 0.000000)");
+    s.setByString("Vector3(0.123456 0.789101 0.111213)");
+    REQUIRE(s.get<Vector3Value>()
             ==
             ApproxV3(Vector3{ 0.123456, 0.789101, 0.111213 }));
 }

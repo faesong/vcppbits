@@ -9,11 +9,10 @@ using namespace V2::SettingsDefault;
 
 TEST_CASE("Setting2 initialized", "[Setting2]" ) {
     Setting s1(BoolValue(false));
-    REQUIRE(s1.get<BoolValue>().getValue() == false);
+    REQUIRE(s1.get<BoolValue>() == false);
     Setting s2(FloatValue(0.f));
-    REQUIRE(s2.getValue<FloatValue>() == Approx(0.f));
     REQUIRE(s2.get<FloatValue>() == Approx(0.f));
-    REQUIRE_THROWS_AS(s2.getValue<BoolValue>(), std::bad_variant_access);
+    REQUIRE_THROWS_AS(s2.get<BoolValue>(), std::bad_variant_access);
 }
 
 TEST_CASE("Setting2TypeEnum checked", "[Setting2]" ) {
@@ -41,16 +40,16 @@ TEST_CASE("Setting2TypeEnum checked", "[Setting2]" ) {
 
 TEST_CASE("Arithmetically constrained setting initialized", "[Setting2]" ) {
     Setting s1(BoolValue(false));
-    REQUIRE(s1.get<BoolValue>().getValue() == false);
+    REQUIRE(s1.get<BoolValue>() == false);
     Setting s2(FloatValue(1.2f, ArithmeticConstraint(0.3f, 1.4f)));
-    REQUIRE(s2.get<FloatValue>().getValue() == Approx(1.2f));
+    REQUIRE(s2.get<FloatValue>() == Approx(1.2f));
     REQUIRE_THROWS_AS(Setting(FloatValue(1.2f, ArithmeticConstraint(0.f, 1.f))),
                       std::runtime_error);
 }
 
 TEST_CASE("Enum constrained setting initialized", "[Setting2]" ) {
     Setting s(EnumFloatValue(.3f, EnumConstraint<float>({ 0.3f, 1.4f, 1.9f })));
-    REQUIRE(s.get<EnumFloatValue>().getValue() == Approx(0.3f));
+    REQUIRE(s.get<EnumFloatValue>() == Approx(0.3f));
     REQUIRE_THROWS_AS(Setting(EnumFloatValue(1.2f, EnumConstraint<float>({0.f, 1.f}))),
                       std::runtime_error);
     Setting s2(EnumIntValue(1, EnumConstraint<int>({ 0, 1 })));
@@ -86,7 +85,8 @@ TEST_CASE("Enum setting of string initialized", "[Setting2]") {
                                                                   "haha",
                                                                   "ololo" })));
     REQUIRE(s.getAsString() == std::string("hehe"));
-    REQUIRE(s.get<EnumStringValue>().getConstraint().isValid("haha"));
+    // TODO: add to API
+    //REQUIRE(s.get<EnumStringValue>().getConstraint().isValid("haha"));
 
     REQUIRE_THROWS_AS(Setting(EnumStringValue("hoho", EnumConstraint<std::string>({ "hehe",
                                                                   "haha",
@@ -128,17 +128,26 @@ TEST_CASE("Read some settings", "[Settings2]") {
                        EnumIntValue(0,
                                     EnumConstraint<int>({ 0, 1, 12312 })));
 
-    REQUIRE(settings.getValue<StringValue>("toplevel_str") == "default_val");
-    REQUIRE(settings.getValue<IntValue>("toplevel_int") == 0);
-    REQUIRE(settings.getValue<FloatValue>("toplevel_float") == Approx(0.1f));
-    REQUIRE(settings.getValue<StringValue>("section1.foo") == "default_str");
-    REQUIRE(settings.getValue<EnumIntValue>("section1.bar_int") == 0);
+    REQUIRE(settings.get<StringValue>("toplevel_str") == "default_val");
+    REQUIRE(settings.get<IntValue>("toplevel_int") == 0);
+    REQUIRE(settings.get<FloatValue>("toplevel_float") == Approx(0.1f));
+    REQUIRE(settings.get<StringValue>("section1.foo") == "default_str");
+    REQUIRE(settings.get<EnumIntValue>("section1.bar_int") == 0);
 
     settings.load();
 
-    REQUIRE(settings.getValue<StringValue>("toplevel_str") == "one");
-    REQUIRE(settings.getValue<IntValue>("toplevel_int") == 1241);
-    REQUIRE(settings.getValue<FloatValue>("toplevel_float") == Approx(3.1415926f));
-    REQUIRE(settings.getValue<StringValue>("section1.foo") == "a bit longer string");
-    REQUIRE(settings.getValue<EnumIntValue>("section1.bar_int") == 12312);
+    REQUIRE(settings.get<StringValue>("toplevel_str") == "one");
+    REQUIRE(settings.get<IntValue>("toplevel_int") == 1241);
+    REQUIRE(settings.get<FloatValue>("toplevel_float") == Approx(3.1415926f));
+    REQUIRE(settings.get<StringValue>("section1.foo") == "a bit longer string");
+    REQUIRE(settings.get<EnumIntValue>("section1.bar_int") == 12312);
+}
+
+TEST_CASE("Setting2 ptr update mechanism", "[Setting2]" ) {
+    std::string keep_me_updated;
+    Setting s(StringValue(std::string("hehe")));
+    s.setPtrToUpdate<StringValue>(&keep_me_updated);
+    REQUIRE(keep_me_updated == s.get<StringValue>());
+    s.set<StringValue>("xoxo");
+    REQUIRE(keep_me_updated == s.get<StringValue>());
 }

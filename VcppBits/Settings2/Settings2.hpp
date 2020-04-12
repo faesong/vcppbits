@@ -16,8 +16,9 @@ struct NoneConstraint {
 };
 
 
-// TODO3: rename, and note that it only works for fundamental type settings
-// (the ones that are covered by std::numeric_limits)
+// TODO3: rename to FundamentalArithmeticConstraint, and note that it only works
+// for fundamental type settings (the ones that are covered by
+// std::numeric_limits)
 template<typename T>
 struct ArithmeticConstraint {
     using value_type = T;
@@ -34,6 +35,24 @@ struct ArithmeticConstraint {
     value_type _max = std::numeric_limits<value_type>::max();
 };
 
+// works for anything that has <= and >= operators defined,
+// but does not have default-constructor
+template<typename T>
+struct GenericArithmeticConstraint {
+    using value_type = T;
+    GenericArithmeticConstraint (const T pMin,
+                                 const T pMax)
+        : _min (pMin),
+          _max (pMax) {}
+    bool isValid (const T pValueToTest) const {
+        return (pValueToTest >= _min) && (pValueToTest <= _max);
+    }
+
+    T _min;
+    T _max;
+};
+
+
 template<typename T>
 struct EnumConstraint {
     using value_type = T;
@@ -43,7 +62,9 @@ struct EnumConstraint {
 
     template <typename TT>
     bool
-    isValid(const TT pValueToTest, typename std::enable_if<!std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
+    isValid(const TT pValueToTest,
+            typename std::enable_if<!std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
+        (void) dummy;
         return std::find(_validValues.begin(), _validValues.end(), pValueToTest)
             != _validValues.end();
     }
@@ -51,6 +72,7 @@ struct EnumConstraint {
     template <typename TT>
     bool
     isValid (const TT pValueToTest, typename std::enable_if<std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
+        (void) dummy;
         return std::find_if(_validValues.begin(),
                          _validValues.end(),
                          [&pValueToTest] (const TT pVal) {
@@ -70,6 +92,7 @@ template<typename T,
          T _fromString(const std::string&)>
 struct SettingValue {
     using value_type = T;
+    using constraint_type = CT<T>;
     SettingValue (const T pValue, const CT<T> pConstraint = CT<T>{})
         : _val (pValue),
           _defaultVal (pValue),
@@ -81,12 +104,8 @@ struct SettingValue {
     }
     operator value_type () const { return _val; }
     std::string getAsString () const { return _toString(_val); }
-    void setByString (const std::string pStr) {
-        setValue(_fromString(pStr));
-    }
-
-    void resetToDefault () {
-        _val = _defaultVal;
+    bool setByString (const std::string pStr) {
+        return setValue(_fromString(pStr));
     }
 
     const value_type& getValue () const {
@@ -96,6 +115,9 @@ struct SettingValue {
     bool setValue (const value_type pValue) {
         if (_constraint.isValid(pValue)) {
             _val = pValue;
+            if (_ptr) {
+                *_ptr = pValue;
+            }
             return true;
         }
         return false;
@@ -105,8 +127,29 @@ struct SettingValue {
         return _constraint;
     }
 
+    void setPtrToUpdate (value_type* pPtr) {
+        _ptr = pPtr;
+        if (*_ptr != _val) {
+            *_ptr = _val;
+        }
+    }
+
+    bool updateFromPtr () {
+        return setValue(*_ptr);
+    }
+
+    value_type* getUpdatePtr () {
+        return _ptr;
+    }
+
+    value_type getDefaultValue () const {
+        return _defaultVal;
+    }
+
+
 private:
     value_type _val;
+    value_type* _ptr = nullptr;
     const value_type _defaultVal;
     CT<T> _constraint;
 };
@@ -135,8 +178,8 @@ public:
     template <typename T,
               typename DUMMY = typename std::enable_if<detail::is_one_of_variants_types<storage_type, T>>::type>
     explicit SettingImpl(T setting_value, DUMMY* dummy = nullptr)
-
         : _val (setting_value) {
+        (void) dummy;
     }
 
     SettingImpl (SettingImpl& pOther) = delete;
@@ -148,25 +191,33 @@ public:
         return EnumT(_val.index());
     }
 
-    template <typename T>
-    typename std::enable_if<detail::is_one_of_variants_types<storage_type, T>, T>::type&
-    get () {
-        return std::get<T>(_val);
-    }
-
     template<typename T>
-    const typename T::value_type& getValue () const {
+    const typename T::value_type& get () const {
         return std::get<T>(_val).getValue();
     }
 
+    template<typename T>
+    void set (const typename T::value_type& pValue) {
+        if(std::get<T>(_val).getValue() != pValue
+           && std::get<T>(_val).setValue(pValue)) {
+            onUpdate();
+        }
+    }
+
     void setByString (const std::string &pStr) {
-        return std::visit([&pStr](auto&& arg) {
+        return std::visit([&](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
             // TODO: do we need this first if block?
-            if constexpr (std::is_same_v<typename T::value_type, std::string>)
-                arg.setValue(pStr);
-            else if constexpr (detail::is_one_of_variants_types<storage_type, T>)
-                return arg.setByString(pStr);
+            if constexpr (std::is_same_v<typename T::value_type, std::string>) {
+                if(pStr != arg.getValue() && arg.setValue(pStr)) {
+                    onUpdate();
+                }
+            }
+            else if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
+                if (arg.getAsString() != pStr && arg.setByString(pStr)) {
+                    onUpdate();
+                }
+            }
             else
                 static_assert(detail::always_false<T>::value, "non-exhaustive visitor!");
         }, _val);
@@ -184,19 +235,98 @@ public:
             }, _val);
     }
 
-    void resetToDefault () {
+    bool isDefault () const {
         return std::visit([](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (detail::is_one_of_variants_types<storage_type, T>)
-                return arg.resetToDefault();
+                return arg.getValue() == arg.getDefaultValue();
+            else
+                static_assert(detail::always_false<T>::value, "non-exhaustive visitor!");
+        }, _val);
+    }
+
+
+    void resetToDefault () {
+        return std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
+                if (arg.getDefaultValue() != arg.getValue()) {
+                    arg.setValue(arg.getDefaultValue());
+                    onUpdate();
+                }
+            }
             else
                 static_assert(detail::always_false<T>::value,
                               "non-exhaustive visitor!");
         }, _val);
     }
 
+    void addUpdateHandler (void *pListenerId, std::function<void()> pFunction) {
+        _listeners.push_back(std::make_pair(pListenerId, pFunction));
+    }
+
+    void removeUpdateHandler (const void *pListenerId) {
+        // TODO5: is this the way to do it??
+        std::vector<SettingListener>::iterator
+            it = _listeners.begin(),
+            end = _listeners.end();
+        for (; it != end; ++it) {
+            if (it->first == pListenerId) {
+                _listeners.erase(it);
+                return;
+            }
+        }
+    }
+
+
+    template<typename T>
+    SettingImpl& setPtrToUpdate (typename T::value_type* pPtr) {
+        std::get<T>(_val).setPtrToUpdate(pPtr);
+        return *this;
+    }
+
+    template<typename T>
+    typename T::value_type* getUpdatePtr () {
+        return std::get<T>(_val).getUpdatePtr();
+    }
+
+    // TODO: add unittest for it
+    void updateFromPtr () {
+        return std::visit([&](auto&& arg) {
+                              using T = std::decay_t<decltype(arg)>;
+            if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
+                if (arg.getValue() != *arg.getUpdatePtr()
+                    && arg.updateFromPtr()) {
+                    onUpdate();
+                }
+            }
+            else
+                static_assert(detail::always_false<T>::value,
+                              "non-exhaustive visitor!");
+        }, _val);
+    }
+
+    template<typename T>
+    const typename T::constraint_type getConstraint () {
+        return std::get<T>(_val).getConstraint();
+    }
+
+
 protected:
+    void onUpdate() {
+        std::vector<SettingListener>::iterator
+            it = _listeners.begin(),
+            end = _listeners.end();
+        int i = 0;
+        for (; it != end; ++it) {
+            it->second();
+            ++i;
+        }
+    }
     storage_type _val;
+
+    using SettingListener = std::pair<void *, std::function<void()>>;
+    std::vector<SettingListener> _listeners;
 };
 
 
@@ -206,7 +336,9 @@ class SettingsException: public std::exception {
 public:
     enum class Type { ALREADY_EXISTS, NOT_FOUND };
     explicit SettingsException (const std::string& message, const Type pType):
-        _msg(message){}
+        _msg(message),
+        _type(pType) {
+    }
 
     virtual ~SettingsException() throw (){}
 
@@ -223,12 +355,11 @@ protected:
     Type _type;
 };
 
-
-template<typename Setting>
+template<typename SettingT>
 class SettingsImpl {
 public:
-    using SettingsMap = std::map<std::string, Setting>;
-    using SettingsPtrsMap = std::map<std::string, Setting*>;
+    using SettingsMap = std::map<std::string, SettingT>;
+    using SettingsPtrsMap = std::map<std::string, SettingT*>;
     using SettingsCategories = std::map<std::string, SettingsPtrsMap>;
 
     class SettingsSectionView {
@@ -245,8 +376,8 @@ public:
             bool operator!=(const iterator& pOther) const {
                 return _current != pOther._current;
             }
-            Setting& operator*() const {
-                return *(_current->second);
+            const typename SettingsPtrsMap::value_type& operator*() const {
+                return *(_current);
             }
         private:
             typename SettingsPtrsMap::iterator _current;
@@ -333,7 +464,7 @@ public:
     }
 
     void resetAll() {
-        SettingsMap::iterator
+        typename SettingsMap::iterator
             it = _values.begin(),
             end = _values.end();
         for (;it != end; ++it) {
@@ -359,7 +490,7 @@ public:
             return;
         }
         KeyFile file;
-        SettingsMap::const_iterator
+        typename SettingsMap::const_iterator
             it = _values.begin(),
             end = _values.end();
         for (;it != end; ++it) {
@@ -369,7 +500,7 @@ public:
     }
 
 
-    const Setting& getSetting (const std::string& pName) const {
+    const SettingT& getSetting (const std::string& pName) const {
         if (_valuesMap.count(pName) < 1) {
             throw SettingsException("Setting " + pName + " not found",
                                     SettingsException::Type::NOT_FOUND);
@@ -378,7 +509,7 @@ public:
         return *_valuesMap.at(pName);
     }
 
-    Setting& getSetting (const std::string& pName) {
+    SettingT& getSetting (const std::string& pName) {
         if (_valuesMap.count(pName) < 1) {
             throw SettingsException("Setting " + pName + " not found",
                                     SettingsException::Type::NOT_FOUND);
@@ -390,10 +521,10 @@ public:
     bool hasSetting (const std::string& pName) const {
         return _valuesMap.count(pName);
     }
- 
+
     template <typename... Args>
-    Setting& appendSetting (const std::string &pName,
-                            Args... pArgs) {
+    SettingT& appendSetting (const std::string &pName,
+                             Args... pArgs) {
         if (_valuesMap.count(pName) > 0) {
             throw SettingsException(
                 "Setting " + pName + " already exists",
@@ -401,10 +532,12 @@ public:
         }
 
         auto res = _values.emplace(pName, pArgs...);
+        // TODO use it?
+        (void) res;
 
-        Setting& inserted_set = _values.at(pName);
-        _valuesMap.insert(SettingsPtrsMap::value_type(pName,
-                                                      &inserted_set));
+        SettingT& inserted_set = _values.at(pName);
+        _valuesMap.insert(typename SettingsPtrsMap::value_type(pName,
+                                                               &inserted_set));
 
         size_t n = pName.find('.', 0);
         std::string categ_name =
@@ -415,12 +548,14 @@ public:
         return inserted_set;
 
     }
+
     void setFilename (const std::string& pName) {
         _filename = pName;
     }
+
     template<typename T>
-    const typename T::value_type& getValue (const std::string& pName) const {
-        return getSetting(pName).getValue<T>();
+    const typename T::value_type& get (const std::string& pName) const {
+        return getSetting(pName).template get<T>();
     }
 private:
 
@@ -429,7 +564,6 @@ private:
     SettingsCategories _categories;
     std::string _filename;
 };
-
 
 inline std::string bool_to_string (const bool pBoolValue) {
     return VcppBits::StringUtils::toString(pBoolValue);
