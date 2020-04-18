@@ -62,24 +62,34 @@ struct EnumConstraint {
 
     template <typename TT>
     bool
-    isValid(const TT pValueToTest,
-            typename std::enable_if<!std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
-        (void) dummy;
-        return std::find(_validValues.begin(), _validValues.end(), pValueToTest)
-            != _validValues.end();
+    isValid (const TT pValueToTest) const {
+        return _getPos(pValueToTest) != _validValues.end();
     }
 
     template <typename TT>
-    bool
-    isValid (const TT pValueToTest, typename std::enable_if<std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
+    int getPosInt (TT pValueToFind) const {
+        return std::distance(_validValues.cbegin(), _getPos(pValueToFind));
+    }
+
+    template <typename TT>
+    typename std::vector<value_type>::const_iterator
+    _getPos (const TT pValueToTest,
+            typename std::enable_if<!std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
         (void) dummy;
-        return std::find_if(_validValues.begin(),
-                         _validValues.end(),
-                         [&pValueToTest] (const TT pVal) {
-                             return std::abs(pVal - pValueToTest)
-                                 < std::numeric_limits<T>::epsilon();
-                         })
-            != _validValues.end();
+        return std::find(_validValues.cbegin(), _validValues.cend(), pValueToTest);;
+    }
+
+    template <typename TT>
+    typename std::vector<value_type>::const_iterator
+    _getPos (const TT pValueToTest,
+             typename std::enable_if<std::is_floating_point<TT>::value>::type* dummy = nullptr) const {
+        (void) dummy;
+        return std::find_if(_validValues.cbegin(),
+                            _validValues.cend(),
+                            [&pValueToTest] (const TT pVal) {
+                                return std::abs(pVal - pValueToTest)
+                                    < std::numeric_limits<T>::epsilon();
+                            });
     }
 
     std::vector<value_type> _validValues;
@@ -115,9 +125,10 @@ struct SettingValue {
     bool setValue (const value_type pValue) {
         if (_constraint.isValid(pValue)) {
             _val = pValue;
-            if (_ptr) {
-                *_ptr = pValue;
-            }
+            // TODO4: cleanup
+            // if (_ptr) {
+            //     *_ptr = pValue;
+            // }
             return true;
         }
         return false;
@@ -127,31 +138,76 @@ struct SettingValue {
         return _constraint;
     }
 
-    void setPtrToUpdate (value_type* pPtr) {
-        _ptr = pPtr;
-        if (*_ptr != _val) {
-            *_ptr = _val;
-        }
-    }
+    // TODO cleanup
+    // void setPtrToUpdate (value_type* pPtr) {
+    //     _ptr = pPtr;
+    //     if (*_ptr != _val) {
+    //         *_ptr = _val;
+    //     }
+    // }
 
-    bool updateFromPtr () {
-        return setValue(*_ptr);
-    }
 
-    value_type* getUpdatePtr () {
-        return _ptr;
-    }
+    // bool updateFromPtr () {
+    //     return setValue(*_ptr);
+    // }
+
+    // value_type* getUpdatePtr () {
+    //     return _ptr;
+    // }
 
     value_type getDefaultValue () const {
         return _defaultVal;
     }
 
+    // TODO10: this are not supposed to  be used?
+    void addUpdateHandler (void *pListenerId,
+                           std::function<void(const value_type&)> pFunction) {
+        _listeners.push_back(std::make_pair(pListenerId, pFunction));
+    }
+
+    void removeUpdateHandler (const void *pListenerId) {
+        // TODO5: is this the way to do it??
+        std::vector<SettingListener>::iterator
+            it = _listeners.begin(),
+            end = _listeners.end();
+        for (; it != end; ++it) {
+            if (it->first == pListenerId) {
+                _listeners.erase(it);
+                return;
+            }
+        }
+    }
+
+    void onUpdate() {
+        std::vector<SettingListener>::iterator
+            it = _listeners.begin(),
+            end = _listeners.end();
+        int i = 0;
+        for (; it != end; ++it) {
+            it->second(_val);
+            ++i;
+        }
+    }
+
+    value_type *getIncomingPtr () {
+        _incoming = _val;
+        return &_incoming;
+    }
+
+    value_type *getRawIncomingPtr () {
+        return &_incoming;
+    }
 
 private:
     value_type _val;
-    value_type* _ptr = nullptr;
+    value_type _incoming;
+    // TODO: cleanup
+    // value_type* _ptr = nullptr;
     const value_type _defaultVal;
     CT<T> _constraint;
+
+    using SettingListener = std::pair<void *, std::function<void(const value_type&)>>;
+    std::vector<SettingListener> _listeners;
 };
 
 namespace detail {
@@ -191,6 +247,15 @@ public:
         return EnumT(_val.index());
     }
 
+    // will not expose altogether
+    /*
+    template <typename T>
+    typename std::enable_if<detail::is_one_of_variants_types<storage_type, T>, T>::type&
+    get () {
+        return std::get<T>(_val);
+    }
+    */
+
     template<typename T>
     const typename T::value_type& get () const {
         return std::get<T>(_val).getValue();
@@ -200,8 +265,13 @@ public:
     void set (const typename T::value_type& pValue) {
         if(std::get<T>(_val).getValue() != pValue
            && std::get<T>(_val).setValue(pValue)) {
-            onUpdate();
+            std::get<T>(_val).onUpdate();
         }
+    }
+
+    template<typename T>
+    void triggerListeners () {
+        std::get<T>(_val).onUpdate();
     }
 
     void setByString (const std::string &pStr) {
@@ -210,12 +280,12 @@ public:
             // TODO: do we need this first if block?
             if constexpr (std::is_same_v<typename T::value_type, std::string>) {
                 if(pStr != arg.getValue() && arg.setValue(pStr)) {
-                    onUpdate();
+                    arg.onUpdate();
                 }
             }
             else if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
                 if (arg.getAsString() != pStr && arg.setByString(pStr)) {
-                    onUpdate();
+                    arg.onUpdate();
                 }
             }
             else
@@ -252,7 +322,7 @@ public:
             if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
                 if (arg.getDefaultValue() != arg.getValue()) {
                     arg.setValue(arg.getDefaultValue());
-                    onUpdate();
+                    arg.onUpdate();
                 }
             }
             else
@@ -261,33 +331,18 @@ public:
         }, _val);
     }
 
-    void addUpdateHandler (void *pListenerId, std::function<void()> pFunction) {
-        _listeners.push_back(std::make_pair(pListenerId, pFunction));
+    template<typename T>
+    typename T::value_type* getIncomingPtr () {
+        return std::get<T>(_val).getIncomingPtr();
     }
 
-    void removeUpdateHandler (const void *pListenerId) {
-        // TODO5: is this the way to do it??
-        std::vector<SettingListener>::iterator
-            it = _listeners.begin(),
-            end = _listeners.end();
-        for (; it != end; ++it) {
-            if (it->first == pListenerId) {
-                _listeners.erase(it);
-                return;
-            }
+    // TODO4: make non-template?
+    template<typename T>
+    void setFromIncomingPtr () {
+        auto p = std::get<T>(_val).getRawIncomingPtr();
+        if (*p != get<T>()) {
+            set<T>(*p);
         }
-    }
-
-
-    template<typename T>
-    SettingImpl& setPtrToUpdate (typename T::value_type* pPtr) {
-        std::get<T>(_val).setPtrToUpdate(pPtr);
-        return *this;
-    }
-
-    template<typename T>
-    typename T::value_type* getUpdatePtr () {
-        return std::get<T>(_val).getUpdatePtr();
     }
 
     // TODO: add unittest for it
@@ -297,7 +352,7 @@ public:
             if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
                 if (arg.getValue() != *arg.getUpdatePtr()
                     && arg.updateFromPtr()) {
-                    onUpdate();
+                    arg.onUpdate();
                 }
             }
             else
@@ -307,26 +362,54 @@ public:
     }
 
     template<typename T>
-    const typename T::constraint_type getConstraint () {
+    const typename T::constraint_type& getConstraint () const {
         return std::get<T>(_val).getConstraint();
+    }
+
+    template<typename T>
+    void addUpdateHandler (void *pListenerId,
+                           std::function<void(const typename T::value_type&)> pFunction) {
+        std::get<T>(_val).addUpdateHandler(pListenerId, pFunction);
+    }
+
+    // TODO2: come up with better name and add remove() counterpart
+    void addSimpleUpdateHandler (void *pListenerId,
+                                 std::function<void()> pFunction) {
+        return std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
+                    arg.addUpdateHandler(
+                        pListenerId,
+                        [pFunction] (const typename T::value_type& pNewVal) {
+                            pFunction();
+                        });
+
+            }
+            else
+                static_assert(detail::always_false<T>::value,
+                              "non-exhaustive visitor!");
+                          }, _val);
+    }
+
+
+    template<typename T>
+    void removeUpdateHandler (void *pListenerId) {
+        std::get<T>(_val).removeUpdateHandler(pListenerId);
+    }
+
+    template<typename T>
+    int getEnumPos () const {
+        return getConstraint<T>().getPosInt(get<T>());
+    }
+
+    template<typename T>
+    const std::vector<typename T::value_type>& getEnumElements() const {
+        return getConstraint<T>()._validValues;
     }
 
 
 protected:
-    void onUpdate() {
-        std::vector<SettingListener>::iterator
-            it = _listeners.begin(),
-            end = _listeners.end();
-        int i = 0;
-        for (; it != end; ++it) {
-            it->second();
-            ++i;
-        }
-    }
     storage_type _val;
-
-    using SettingListener = std::pair<void *, std::function<void()>>;
-    std::vector<SettingListener> _listeners;
 };
 
 
@@ -425,7 +508,7 @@ public:
     iterator end () { return iterator(_categories.end()); }
 
 
-    SettingsImpl (const std::string &pFilename/* = "" */)
+    SettingsImpl (const std::string &pFilename = "")
         : _filename (pFilename) {
     }
 
@@ -557,6 +640,18 @@ public:
     const typename T::value_type& get (const std::string& pName) const {
         return getSetting(pName).template get<T>();
     }
+
+    template<typename T>
+    const void set (const std::string& pName,
+                    const typename T::value_type &pNewVal) {
+        return getSetting(pName).template set<T>(pNewVal);
+    }
+
+    template<typename T>
+    void triggerListeners (const std::string& pName) {
+        return getSetting(pName).template triggerListeners<T>();
+    }
+
 private:
 
     SettingsMap _values;
@@ -564,6 +659,13 @@ private:
     SettingsCategories _categories;
     std::string _filename;
 };
+
+// template <typename SettingT, typename T>
+// typename T::value_type &_get (SettingsImpl<SettingT> &pSettings,
+//                               const std::string& pName) {
+//     return pSettings.getSetting(pName)::template.get<T>();
+// }
+
 
 inline std::string bool_to_string (const bool pBoolValue) {
     return VcppBits::StringUtils::toString(pBoolValue);

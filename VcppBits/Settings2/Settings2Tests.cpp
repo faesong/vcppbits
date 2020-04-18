@@ -146,7 +146,6 @@ TEST_CASE("Read some settings", "[Settings2]") {
 TEST_CASE("Setting2 ptr update mechanism", "[Setting2]" ) {
     std::string keep_me_updated;
     Setting s(StringValue(std::string("hehe")));
-    s.setPtrToUpdate<StringValue>(&keep_me_updated);
     REQUIRE(keep_me_updated == s.get<StringValue>());
     s.set<StringValue>("xoxo");
     REQUIRE(keep_me_updated == s.get<StringValue>());
