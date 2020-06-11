@@ -270,7 +270,7 @@ public:
     SettingImpl operator= (SettingImpl& pOther) = delete;
     SettingImpl operator= (SettingImpl&& pOther) = delete;
 
-    EnumT getType() {
+    EnumT getType () {
         return EnumT(_val.index());
     }
 
