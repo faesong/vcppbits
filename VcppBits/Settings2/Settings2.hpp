@@ -22,6 +22,9 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+#pragma once
+
+
 #include <iostream>
 #include <variant>
 #include <map>
@@ -191,7 +194,7 @@ struct SettingValue {
 
     void removeUpdateHandler (const void *pListenerId) {
         // TODO5: is this the way to do it??
-        std::vector<SettingListener>::iterator
+        typename std::vector<SettingListener>::iterator
             it = _listeners.begin(),
             end = _listeners.end();
         for (; it != end; ++it) {
@@ -203,7 +206,7 @@ struct SettingValue {
     }
 
     void onUpdate() {
-        std::vector<SettingListener>::iterator
+        typename std::vector<SettingListener>::iterator
             it = _listeners.begin(),
             end = _listeners.end();
         int i = 0;
