@@ -421,6 +421,7 @@ public:
         std::get<T>(_val).removeUpdateHandler(pListenerId);
     }
 
+    // TODO no type check here and next??
     template<typename T>
     int getEnumPos () const {
         return getConstraint<T>().getPosInt(get<T>());
