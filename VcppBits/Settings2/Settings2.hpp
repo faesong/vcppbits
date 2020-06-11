@@ -469,6 +469,9 @@ protected:
 template<typename SettingT>
 class SettingsImpl {
 public:
+    // TODO do we need this?
+    using setting_type = SettingT;
+
     using SettingsMap = std::map<std::string, SettingT>;
     using SettingsPtrsMap = std::map<std::string, SettingT*>;
     using SettingsCategories = std::map<std::string, SettingsPtrsMap>;
@@ -534,6 +537,10 @@ public:
 
     iterator begin () { return iterator(_categories.begin()); }
     iterator end () { return iterator(_categories.end()); }
+
+    SettingsSectionView getSection (const std::string &pSectionName) {
+        return SettingsSectionView(pSectionName, _categories[pSectionName]);
+    }
 
 
     SettingsImpl (const std::string &pFilename = "")
@@ -670,8 +677,8 @@ public:
     }
 
     template<typename T>
-    const void set (const std::string& pName,
-                    const typename T::value_type &pNewVal) {
+    void set (const std::string& pName,
+              const typename T::value_type &pNewVal) {
         return getSetting(pName).template set<T>(pNewVal);
     }
 
@@ -762,5 +769,80 @@ using Setting = SettingImpl<SettingTypeEnum,
 
 using Settings = SettingsImpl<Setting>;
 } // namespace SettingsDefault
+
+namespace SettingsUtils {
+
+template <typename T, typename SettingsT>
+typename SettingsT::setting_type&
+createArithmetic (SettingsT& pSettings,
+                  const std::string& pSettingName,
+                  const typename T::value_type pMin,
+                  const typename T::value_type pMax,
+                  const typename T::value_type pDefault,
+                  typename T::value_type* pValueToKeepUpdated = nullptr) {
+    auto &set = pSettings.appendSetting(
+        pSettingName, T(pDefault, ArithmeticConstraint(pMin, pMax)));
+    if (pValueToKeepUpdated) {
+        set.template addUpdateHandler<T>(
+            &pSettings,
+            [pValueToKeepUpdated] (const typename T::value_type& pNewVal) {
+                *pValueToKeepUpdated = pNewVal;
+            });
+        *pValueToKeepUpdated = pDefault;
+    }
+
+    return set;
+}
+
+template <typename T, typename SettingsT>
+typename SettingsT::setting_type&
+createEnum (SettingsT& pSettings,
+            const std::string& pSettingName,
+            const std::vector<typename T::value_type> pValues,
+            const typename T::value_type pDefault,
+            typename T::value_type* pValueToKeepUpdated = nullptr,
+            int* pIntValueToKeepUpdated = nullptr) {
+    auto &set = pSettings.appendSetting(
+        pSettingName, T(pDefault, EnumConstraint(pValues)));
+    set.template addUpdateHandler<T>(
+        &pSettings,
+        [pValueToKeepUpdated, &set, pIntValueToKeepUpdated] (const typename T::value_type& pNewVal) {
+            if (pValueToKeepUpdated) {
+                *pValueToKeepUpdated = pNewVal;
+            }
+            if (pIntValueToKeepUpdated) {
+                *pIntValueToKeepUpdated = set.template getEnumPos<T>();
+            }
+        });
+    if (pValueToKeepUpdated) {
+        *pValueToKeepUpdated = pDefault;
+    }
+    if (pIntValueToKeepUpdated) {
+        *pIntValueToKeepUpdated = set.template getEnumPos<T>();
+    }
+    return set;
+}
+
+template <typename T, typename SettingsT>
+typename SettingsT::setting_type&
+create (SettingsT& pSettings,
+        const std::string& pSettingName,
+        typename T::value_type pDefault,
+        typename T::value_type* pValueToKeepUpdated = nullptr) {
+    auto &set = pSettings.appendSetting(pSettingName, T(pDefault));
+
+    if (pValueToKeepUpdated) {
+        set.template addUpdateHandler<T>(
+            &pSettings,
+            [pValueToKeepUpdated] (const typename T::value_type& pNewVal) {
+                *pValueToKeepUpdated = pNewVal;
+            });
+        *pValueToKeepUpdated = pDefault;
+    }
+
+    return set;
+}
+
+} // namespace SettingsUtils
 
 } // namespace V2
