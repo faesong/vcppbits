@@ -407,7 +407,7 @@ public:
             if constexpr (detail::is_one_of_variants_types<storage_type, T>) {
                     arg.addUpdateHandler(
                         pListenerId,
-                        [pFunction] (const typename T::value_type& pNewVal) {
+                        [pFunction] (const typename T::value_type&) {
                             pFunction();
                         });
 
