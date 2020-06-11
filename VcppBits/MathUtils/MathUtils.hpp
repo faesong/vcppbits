@@ -56,6 +56,30 @@ T sign (const T& pVal) {
     return pVal > 0 ? T{1} : T{-1};
 }
 
+template<class T>
+T sqr(const T& pVal) {
+    return pVal * pVal;
+}
+
+/// round integer up to closest multiple
+template<typename T>
+T roundUp (T pNumToRound, T pMultiple) {
+    T isPositive = (T)(pNumToRound >= 0);
+    return ((pNumToRound + isPositive * (pMultiple - 1)) / pMultiple) * pMultiple;
+}
+
+template<typename T>
+T getClosestMultiple (T pNum, T pMultipleOf) {
+    // https://stackoverflow.com/a/44110705
+    const T mod = pNum % pMultipleOf;
+    T round = pNum - mod;
+    if (mod > 0) {
+        round += pMultipleOf;
+    }
+    return round;
+}
+
+
 } // namespace MathUtils
 } // namespace VcppBits
 
