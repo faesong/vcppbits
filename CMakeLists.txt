@@ -22,6 +22,8 @@ add_executable(tests
   VcppBits/Settings/SettingsTests.cpp
   VcppBits/Settings/Setting.cpp
   VcppBits/Settings2/Settings2Tests.cpp
-  VcppBits/Settings2/Settings2CustomTypeTests.cpp)
+  VcppBits/Settings2/Settings2CustomTypeTests.cpp
+  VcppBits/MathUtils/MathUtilsTests.cpp
+  )
 
 target_link_libraries(tests VcppBits-KeyFile)

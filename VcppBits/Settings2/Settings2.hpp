@@ -29,6 +29,7 @@
 #include <variant>
 #include <map>
 #include <vector>
+#include <functional>
 
 #include "VcppBits/StringUtils/StringUtils.hpp"
 #include "VcppBits/KeyFile/KeyFile.hpp"
