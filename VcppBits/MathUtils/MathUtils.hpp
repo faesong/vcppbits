@@ -25,6 +25,9 @@
 #ifndef VcppBits_MATH_UTILS_HPP_INCLUDED__
 #define VcppBits_MATH_UTILS_HPP_INCLUDED__
 
+#include <cassert>
+#include <vector>
+
 //TODO2: cleanup
 #include <iostream>
 using namespace std;
