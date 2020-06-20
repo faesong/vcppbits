@@ -266,9 +266,9 @@ public:
         (void) dummy;
     }
 
-    SettingImpl (SettingImpl& pOther) = delete;
+    SettingImpl (const SettingImpl& pOther) = delete;
     SettingImpl (SettingImpl&& pOther) = delete;
-    SettingImpl operator= (SettingImpl& pOther) = delete;
+    SettingImpl operator= (const SettingImpl& pOther) = delete;
     SettingImpl operator= (SettingImpl&& pOther) = delete;
 
     EnumT getType () {
