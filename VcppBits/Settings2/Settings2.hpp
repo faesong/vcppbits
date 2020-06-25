@@ -126,7 +126,7 @@ struct EnumConstraint {
 
 template<typename T,
          template <typename> class CT,
-         std::string _toString(T),
+         std::string _toString(const T&),
          T _fromString(const std::string&)>
 struct SettingValue {
     using value_type = T;
@@ -703,52 +703,36 @@ private:
 // }
 
 
-inline std::string bool_to_string (const bool pBoolValue) {
-    return VcppBits::StringUtils::toString(pBoolValue);
-}
-
-inline std::string string_to_string (const std::string pString) {
-    // one of the most beautiful pieces of code in my life
-    return pString;
-}
-
-template <typename T>
-inline T from_string (const std::string &pStr) {
-    std::stringstream ss(pStr);
-    T ret_val;
-    ss >> ret_val;
-    return ret_val;
-}
-
+using namespace VcppBits::StringUtils;
 
 using BoolValue = SettingValue<bool,
                                NoneConstraint,
-                               bool_to_string,
-                               from_string<bool>>;
+                               toString<bool>,
+                               fromString<bool>>;
 using IntValue = SettingValue<int,
                               ArithmeticConstraint,
-                              std::to_string,
-                              from_string<int>>;
+                              toString<int>,
+                              fromString<int>>;
 using FloatValue = SettingValue<float,
                                 ArithmeticConstraint,
-                                std::to_string,
-                                from_string<float>>;
+                                toString<float>,
+                                fromString<float>>;
 using EnumIntValue = SettingValue<int,
                                   EnumConstraint,
-                                  std::to_string,
-                                  from_string<int>>;
+                                  toString<int>,
+                                  fromString<int>>;
 using EnumFloatValue = SettingValue<float,
                                     EnumConstraint,
-                                    std::to_string,
-                                    from_string<float>>;
+                                    toString<float>,
+                                    fromString<float>>;
 using StringValue = SettingValue<std::string,
                                  NoneConstraint,
-                                 string_to_string,
-                                 from_string<std::string>>;
+                                 toString<std::string>,
+                                 fromString<std::string>>;
 using EnumStringValue = SettingValue<std::string,
                                      EnumConstraint,
-                                     string_to_string,
-                                     from_string<std::string>>;
+                                     toString<std::string>,
+                                     fromString<std::string>>;
 
 namespace SettingsDefault {
 enum class SettingTypeEnum : std::size_t { BOOL,

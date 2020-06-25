@@ -132,6 +132,25 @@ inline std::string toString (const T &val) {
     return ss_val.str();
 }
 
+template <>
+inline std::string toString (const float &pVal) {
+    std::stringstream ss;
+    ss << pVal;
+    auto str = ss.str();
+    size_t i = str.size();
+
+    if (str.find('.') != std::string::npos) {
+        for (; i > 0; --i) {
+            if (str[i-1] != '0') {
+                break;
+            }
+        }
+    }
+
+    return str.substr(0, i);
+}
+
+
 } // namespace StringUtils
 } // namespace VcppBits
 
