@@ -41,10 +41,11 @@ public:
     }
     ~SettingsException () throw () {}
 
-    const std::string getFullDescription () const {
-        return std::string("Setting Error ")
+    const std::string& getFullDescription () const {
+        _errorMessage = std::string("Setting Error ")
             + SettingsStringUtils::toString(this->type) + ": \""
             + settingName + "\"";
+        return _errorMessage;
     }
 
     const char *what () const throw() {
@@ -52,6 +53,7 @@ public:
     }
 
     const std::string settingName;
+    mutable std::string _errorMessage;
     const TYPE type;
 };
 
