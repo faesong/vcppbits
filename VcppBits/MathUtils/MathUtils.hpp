@@ -140,11 +140,11 @@ public:
 
         DataT ret{};
 
-        int pos = int(_pos);
-        int dest = int(std::min(pInnerPos, float(_segments.size() - 2)));
+        size_t pos = size_t(_pos);
+        size_t dest = size_t(std::min(pInnerPos, float(_segments.size() - 2)));
         float leftover = std::min(pInnerPos - dest, 1.f);
         // cout << "dest " << dest << endl;
-        for (; pos != dest; pos += incr) {
+        for (; pos != dest; pos = size_t(int(pos) + incr)) {
             // cout << "walking" << incr << " " << pos << endl;
             ret = ret + _adp.get(_segments[pos]);
         }
