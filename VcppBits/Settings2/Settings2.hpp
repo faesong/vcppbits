@@ -284,6 +284,15 @@ public:
     }
     */
 
+    SettingImpl& setUserData (void *pData) {
+        _userData = pData;
+        return *this;
+    }
+
+    void* getUserData () const {
+        return _userData;
+    }
+
     template<typename T>
     const typename T::value_type& get () const {
         return std::get<T>(_val).getValue();
@@ -439,6 +448,7 @@ public:
 
 protected:
     storage_type _val;
+    void* _userData = nullptr;
 };
 
 
