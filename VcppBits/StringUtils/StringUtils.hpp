@@ -29,6 +29,9 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <vector>
+#include <codecvt>
+#include <locale>
 
 
 namespace VcppBits {
@@ -150,6 +153,94 @@ inline std::string toString (const float &pVal) {
     return str.substr(0, i);
 }
 
+
+class Tokenizer {
+public:
+    Tokenizer (const std::string &pStr,
+               const std::string &pSeparators = " ")
+        : mString (pStr) {
+        size_t pos = 0;
+        while (pos != mString.npos) {
+            const size_t word_start_pos =
+                mString.find_first_not_of(pSeparators, pos);
+            if (word_start_pos == mString.npos) {
+                break;
+            }
+            pos = mString.find_first_of(pSeparators, word_start_pos);
+            const size_t length =
+                (pos == mString.npos)
+                ? mString.size() - word_start_pos
+                : pos - word_start_pos;
+            mWords.push_back(std::pair<size_t, size_t>(word_start_pos, length));
+        }
+    }
+    std::string getWord (const size_t pWordNum) {
+        return mString.substr(mWords[pWordNum].first,
+                              mWords[pWordNum].second);
+    }
+    std::string getWords (const size_t pStartFrom,
+                          const size_t pNumWords) {
+        const size_t end_pos = mWords[pStartFrom + pNumWords - 1].first
+            + mWords[pStartFrom + pNumWords - 1].second;
+        return mString.substr(mWords[pStartFrom].first,
+                              end_pos - mWords[pStartFrom].first);
+    }
+    std::string getRestAt (const size_t pWordNum) {
+        return mString.substr(mWords[pWordNum].first,
+                              mString.npos);
+    }
+    size_t getNumWords () {
+        return mWords.size();
+    }
+
+    std::vector<std::string> getResultList () {
+        std::vector<std::string> ret;
+        for (size_t i = 0; i < getNumWords(); ++i) {
+            ret.push_back(getWord(i));
+        }
+        return ret;
+    }
+
+
+private:
+    std::vector<std::pair<size_t, size_t>> mWords; // post, length
+    std::string mString;
+};
+
+
+inline std::u32string toUtf32 (const std::string &pString) {
+    // https://stackoverflow.com/a/38688418
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
+    return conv.from_bytes(pString);
+}
+
+
+
+// TODO: this is not needed on windows :/
+inline std::string toUtf8 (const wchar_t &pString) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> conv;
+    return conv.to_bytes(pString);
+}
+
+inline std::string toUtf8(const std::wstring& pString) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> conv;
+    return conv.to_bytes(pString);
+}
+
+
+inline std::string toUtf8 (const std::string &pString) {
+    return pString;
+}
+
+inline bool endsWith (const std::string &pString,
+                      const std::string &pEndsWith) {
+    if (pString.length() >= pEndsWith.length()) {
+        return (0 == pString.compare (pString.length() - pEndsWith.length(),
+                                      pEndsWith.length(), pEndsWith));
+    } else {
+        return false;
+    }
+}
 
 } // namespace StringUtils
 } // namespace VcppBits
