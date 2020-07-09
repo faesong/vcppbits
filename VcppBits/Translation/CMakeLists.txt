@@ -1,4 +1,7 @@
-add_library(VcppBits-Translation OBJECT Translation.cpp)
+add_library(VcppBits-Translation OBJECT
+  Translation.cpp
+  ${TRANSLATION_IDS_FILE}
+  ${CMAKE_CURRENT_BINARY_DIR}/Ids.hpp)
 target_link_libraries(VcppBits-Translation VcppBits-StringUtils)
 
 include("../VcppBitsBuildsystemUtils.cmake")

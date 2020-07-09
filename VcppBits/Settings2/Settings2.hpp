@@ -790,6 +790,7 @@ createArithmetic (SettingsT& pSettings,
 }
 
 template <typename T, typename SettingsT>
+// TODO: using this setting_type is not obvious enough 
 typename SettingsT::setting_type&
 createEnum (SettingsT& pSettings,
             const std::string& pSettingName,
