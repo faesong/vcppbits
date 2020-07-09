@@ -58,7 +58,7 @@ struct Vector3 {
 // TODO3: consider being able to specify default constraint value when
 // specializing SettingValue
 
-inline std::string vector3_to_string (const Vector3 pVector3) {
+inline std::string vector3_to_string (const Vector3& pVector3) {
     std::stringstream ss;
     ss << std::fixed;
     ss << "Vector3(" << pVector3.x << " "
