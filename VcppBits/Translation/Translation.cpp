@@ -29,6 +29,7 @@
 #include <codecvt>
 
 
+#include "Ids.hpp"
 #include "Translation.hpp"
 
 namespace VcppBits {

@@ -1,16 +1,17 @@
 add_library(VcppBits-Translation OBJECT
   Translation.cpp
-  ${TRANSLATION_IDS_FILE}
-  ${CMAKE_CURRENT_BINARY_DIR}/Ids.hpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/TranslationIdsStrings.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/TranslationEnglishDefault.hpp)
 target_link_libraries(VcppBits-Translation VcppBits-StringUtils)
 
 include("../VcppBitsBuildsystemUtils.cmake")
 
 vcppbits_include_toplevel_dir(Translation PUBLIC)
 
+configure_file(${TRANSLATION_IDS_FILE} Ids.hpp.junk)
 configure_file(Ids.hpp.in Ids.hpp)
 
-file(STRINGS "${TRANSLATION_IDS_FILE}" STRING_IDS)
+file(STRINGS ${TRANSLATION_IDS_FILE} STRING_IDS)
 
 #populate translation boilerplate...
 set(TR_STRING_IDS "")
@@ -23,10 +24,12 @@ foreach(S ${STRING_IDS})
     string(FIND ${S} "namespace " ns_decl_found)
     string(FIND ${S} "enum " enum_decl_found)
     string(FIND ${S} "}" close_brace_found)
+    string(FIND ${S} "#pragma" pragma_found)
 
     if (${ns_decl_found} EQUAL 0
         OR ${enum_decl_found} EQUAL 0
-        OR ${close_brace_found} EQUAL 0)
+        OR ${close_brace_found} EQUAL 0
+        OR ${pragma_found} EQUAL 0)
     else ()
       string(FIND ${S} " " S_SPACE_POS)
 
