@@ -26,7 +26,9 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-#include "contrib/catch2/catch.hpp"
+#include <VcppBits/contrib/catch2/catch.hpp>
+
+
 #include "MathUtils.hpp"
 
 using namespace VcppBits::MathUtils;

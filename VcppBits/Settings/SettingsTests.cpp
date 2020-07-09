@@ -29,7 +29,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "contrib/catch2/catch.hpp"
+#include "VcppBits/contrib/catch2/catch.hpp"
 
 #include "Setting.hpp"
 

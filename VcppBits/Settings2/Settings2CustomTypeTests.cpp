@@ -29,7 +29,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "contrib/catch2/catch.hpp"
+#include "VcppBits/contrib/catch2/catch.hpp"
 #include "Settings2.hpp"
 
 using namespace V2;
