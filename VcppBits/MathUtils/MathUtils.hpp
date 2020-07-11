@@ -107,7 +107,7 @@ namespace detail {
 // points stay on the same place, and all points in between are smoothed
 inline float nurbs_clientside_k_to_nurbs_k (const float pK,
                                             const size_t pNumSegments) {
-    assert(pNumSegments > 2);
+    assert(pNumSegments > 1);
     if (pK < 1.5f) {
         return pK * 2.f / 3.f;
     } else if (pK > float(pNumSegments - 2) + 0.5) {
@@ -128,7 +128,7 @@ public:
 
     // TODO20: cleanup debug prints
     DataT getPos (const float pPos) const {
-        const float pInnerPos = detail::nurbs_clientside_k_to_nurbs_k(pPos, _segments.size() + 1);
+        const float pInnerPos = detail::nurbs_clientside_k_to_nurbs_k(pPos, _segments.size());
         // cout << "pPos " << pPos << endl;
         // cout << "pInnerPos " << pInnerPos << endl;
         const float diff = pInnerPos - _pos;
