@@ -18,7 +18,7 @@ add_subdirectory(VcppBits/KeyFile KeyFile)
 
 
 add_executable(tests
-  Tests/TestsDriver.cpp
+  VcppBits/TestsDriver/TestsDriver.cpp
   VcppBits/Settings/SettingsTests.cpp
   VcppBits/Settings/Setting.cpp
   VcppBits/Settings2/Settings2Tests.cpp
